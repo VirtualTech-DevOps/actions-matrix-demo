@@ -1,0 +1,25 @@
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  run_in_order:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          for x in dirs/{a,b,c}; do
+              (cd "$x" && pwd)
+          done
+
+  matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target-dir: [a, b, c]
+    steps:
+      - uses: actions/checkout@v4
+      - run: pwd
+        working-directory: dirs/${{ matrix.target-dir }}
