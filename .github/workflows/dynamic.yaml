@@ -1,0 +1,28 @@
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  updated:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+      - uses: actions/checkout@v4
+      - id: set-matrix
+        run: |
+          a=$(git diff --name-only origin/${GITHUB_BASE_REF} HEAD -- . | sed -E 's#^(.*)/[^/]*$#"\1",#' | sort -u | tr -d '\n' | sed -E 's/,$//; s/^(.*)$/[\1]/' | jq -c '{"target-dir": .}')
+          echo -E "matrix=$a" >> "$GITHUB_OUTPUT"
+
+  matrix:
+    needs: updated
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJSON(needs.updated.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: pwd
+        working-directory: ${{ matrix.target-dir }}
